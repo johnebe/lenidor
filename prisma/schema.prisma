@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  orders       Order[]  @relation("UserOrders")
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  icon      String?
+  products  Product[]
+}
+
+model Product {
+  id            String      @id @default(cuid())
+  name          String
+  slug          String      @unique
+  description   String
+  price         Float
+  compareAtPrice Float?
+  images        String // JSON-encoded array of image URLs
+  categoryId    String
+  category      Category    @relation(fields: [categoryId], references: [id])
+  stock         Int
+  rating        Float       @default(4.5)
+  reviewCount   Int         @default(0)
+  brand         String
+  featured      Boolean     @default(false)
+  tags          String      @default("[]") // JSON-encoded array of tags
+  createdAt     DateTime    @default(now())
+  orderItems    OrderItem[]
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  productName String
+  productImage String
+  price       Float
+  quantity    Int
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  email         String
+  fullName      String
+  address       String
+  city          String
+  state         String
+  zip           String
+  country       String
+  phone         String?
+  subtotal      Float
+  shipping      Float
+  tax           Float
+  total         Float
+  status        String      @default("Processing")
+  paymentMethod String      @default("Card")
+  cardLast4     String?
+  userId        String?
+  user          User?       @relation("UserOrders", fields: [userId], references: [id])
+  createdAt     DateTime    @default(now())
+  items         OrderItem[]
+}
